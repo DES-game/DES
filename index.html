@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DES Quest - Learn the Data Encryption Standard as a game</title>
+<meta name="description" content="DES Quest - learn the Data Encryption Standard from scratch, as a game.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117; --bg2:#10161e; --surface:#161c26; --surface2:#1b2431;
+  --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.15);
+  --text:#e9eef5; --dim:#93a2b6; --dim2:#64748b;
+  --gold:#e3ad48; --gold-dim:rgba(227,173,72,.13); --gold-bd:rgba(227,173,72,.35);
+  --teal:#3ac2b0; --teal-dim:rgba(58,194,176,.13); --teal-bd:rgba(58,194,176,.35);
+  --rose:#e27083; --rose-dim:rgba(226,112,131,.13);
+  --green:#54b878; --green-dim:rgba(84,184,120,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px -18px rgba(0,0,0,.7);
+  --r:14px;
+}
+@media (prefers-color-scheme: light){
+ :root{
+  --bg:#f7f5f0; --bg2:#f2efe8; --surface:#ffffff; --surface2:#fbfaf7;
+  --border:rgba(20,25,35,.10); --border2:rgba(20,25,35,.18);
+  --text:#18212e; --dim:#5a6a7e; --dim2:#8593a5;
+  --gold:#b5811f; --gold-dim:rgba(181,129,31,.10); --gold-bd:rgba(181,129,31,.32);
+  --teal:#0f8f80; --teal-dim:rgba(15,143,128,.10); --teal-bd:rgba(15,143,128,.32);
+  --rose:#c04a5e; --rose-dim:rgba(192,74,94,.10);
+  --green:#2f8f57; --green-dim:rgba(47,143,87,.10);
+  --shadow:0 1px 2px rgba(30,40,60,.06),0 14px 30px -20px rgba(30,40,60,.35);
+ }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 500px at 8% -8%, var(--gold-dim), transparent 60%),
+    radial-gradient(760px 460px at 104% 8%, var(--teal-dim), transparent 58%),
+    linear-gradient(var(--bg),var(--bg2));
+  background-attachment:fixed;
+}
+.mono{font-family:'Azeret Mono',ui-monospace,Menlo,Consolas,monospace}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.narrow{max-width:820px}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);
+  background:color-mix(in srgb,var(--bg) 78%,transparent);
+  border-bottom:1px solid var(--border)}
+.topbar .wrap{display:flex;align-items:center;gap:14px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;font-size:1.02rem}
+.brand .mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--gold),#c98b1e);color:#1a1206;font-weight:800;font-size:.82rem;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.brand small{display:block;font-weight:600;font-size:.66rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+  border:1px solid var(--border2);background:var(--surface);font-size:.82rem;font-weight:600}
+.chip b{color:var(--gold)}
+.iconbtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--border2);background:var(--surface);
+  color:var(--text);cursor:pointer;font-size:1rem;display:grid;place-items:center}
+.iconbtn:hover{border-color:var(--gold-bd)}
+.navlink{font-size:.85rem;font-weight:600;color:var(--dim);padding:6px 4px}
+.navlink:hover{color:var(--text)}
+
+/* progress bar in topbar */
+.tb-prog{flex:1;max-width:280px;height:8px;border-radius:99px;background:var(--surface2);
+  border:1px solid var(--border);overflow:hidden;display:none}
+.tb-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--teal));
+  transition:width .5s cubic-bezier(.2,.7,.3,1)}
+@media(min-width:760px){.tb-prog{display:block}}
+
+/* hero */
+.hero{padding:64px 0 26px}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-size:.72rem;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+  border:1px solid var(--gold-bd);background:var(--gold-dim);padding:6px 13px;border-radius:999px}
+h1.title{font-size:clamp(2.2rem,5.4vw,3.5rem);line-height:1.03;letter-spacing:-.035em;margin:20px 0 14px;font-weight:800}
+h1.title em{font-style:normal;color:var(--gold)}
+.lede{font-size:1.13rem;color:var(--dim);max-width:640px}
+.hero-stats{display:flex;flex-wrap:wrap;gap:26px;margin-top:30px}
+.hero-stats .s b{display:block;font-size:1.7rem;font-weight:800;letter-spacing:-.03em}
+.hero-stats .s span{font-size:.78rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em}
+.btnrow{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+
+/* buttons */
+.btn{font:inherit;font-weight:700;font-size:.9rem;border-radius:11px;padding:11px 18px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:.16s}
+.btn:hover{border-color:var(--gold-bd);transform:translateY(-1px)}
+.btn-primary{background:linear-gradient(140deg,var(--gold),#cf9526);border-color:transparent;color:#1a1206}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-ghost{background:transparent}
+.btn:disabled{opacity:.55;cursor:default;transform:none}
+
+/* cards & sections */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+.pad{padding:26px 28px}
+section.block{margin:34px 0}
+.section-label{display:inline-flex;align-items:center;gap:9px;font-size:.72rem;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+.section-label::before{content:"";width:7px;height:7px;border-radius:99px;background:var(--gold)}
+h2{font-size:1.5rem;letter-spacing:-.02em;margin:0 0 12px;font-weight:800}
+h3{font-size:1.12rem;margin:0 0 8px;font-weight:700;letter-spacing:-.01em}
+.prose p{margin:0 0 14px}
+.prose ul,.prose ol{margin:0 0 14px;padding-left:22px}
+.prose li{margin:6px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0}
+.mini{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.mini-k{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);font-weight:700}
+.mini-v{font-size:1.05rem;font-weight:700;margin-top:4px}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{position:relative;padding:8px 0 8px 42px;counter-increment:s}
+.steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:26px;height:26px;border-radius:8px;
+  background:var(--gold-dim);border:1px solid var(--gold-bd);color:var(--gold);font-weight:800;font-size:.8rem;
+  display:grid;place-items:center;font-family:'Azeret Mono',monospace}
+ul.tick{list-style:none;padding:0}
+ul.tick li{position:relative;padding-left:26px;margin:8px 0}
+ul.tick li::before{content:"";position:absolute;left:4px;top:10px;width:7px;height:7px;border-radius:2px;background:var(--teal)}
+.callout{border-radius:12px;padding:15px 18px;margin:18px 0;font-size:.94rem;
+  background:var(--gold-dim);border:1px solid var(--gold-bd)}
+.callout.key{background:var(--gold-dim);border-color:var(--gold-bd)}
+.callout.tip{background:var(--teal-dim);border-color:var(--teal-bd)}
+.callout.warn{background:var(--rose-dim);border-color:var(--rose)}
+.callout.ok{background:var(--green-dim);border-color:var(--green)}
+.co-label{display:block;font-size:.7rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:4px}
+.callout.tip .co-label{color:var(--teal)}
+.callout.warn .co-label{color:var(--rose)}
+.callout.ok .co-label{color:var(--green)}
+
+/* code */
+.codeblock{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  margin:14px 0;overflow:hidden}
+.codeblock .cb-head{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 14px;border-bottom:1px solid var(--border);font-size:.74rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-family:'Azeret Mono',monospace}
+.codeblock pre{margin:0;padding:16px 16px;overflow-x:auto;font-family:'Azeret Mono',monospace;
+  font-size:.82rem;line-height:1.62;white-space:pre;color:var(--text)}
+.copybtn{font:inherit;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--border2);background:transparent;color:var(--dim);border-radius:7px;padding:4px 9px;cursor:pointer}
+.copybtn:hover{color:var(--gold);border-color:var(--gold-bd)}
+pre.mini-code{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:15px 16px;
+  overflow-x:auto;font-family:'Azeret Mono',monospace;font-size:.82rem;line-height:1.6;margin:14px 0}
+.c-dim{color:var(--dim2)}
+details.reveal{border:1px solid var(--border);border-radius:12px;background:var(--surface2);margin:12px 0;overflow:hidden}
+details.reveal summary{cursor:pointer;padding:13px 16px;font-weight:700;font-size:.88rem;list-style:none;
+  display:flex;align-items:center;gap:10px}
+details.reveal summary::-webkit-details-marker{display:none}
+details.reveal summary::before{content:"+";width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+  background:var(--gold-dim);border:1px solid var(--gold-bd);color:var(--gold);font-weight:800;font-size:.85rem}
+details.reveal[open] summary::before{content:"\2013"}
+details.reveal .reveal-body{padding:0 16px 16px}
+
+/* lab */
+.lab{border:1px solid var(--border2);border-radius:var(--r);background:
+  linear-gradient(180deg,var(--surface2),var(--surface));overflow:hidden;box-shadow:var(--shadow)}
+.lab-head{padding:18px 22px 0;display:flex;align-items:center;gap:12px}
+.lab-head h3{margin:0}
+.lab-label{font-family:'Azeret Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#1a1206;background:var(--gold);padding:4px 9px;border-radius:7px}
+.lab-note{padding:0 22px;color:var(--dim);font-size:.9rem}
+.lab .controls{padding:8px 22px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.lab-out{padding:0 22px 22px}
+.inl{display:flex;flex-direction:column;gap:5px;font-size:.74rem;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.input{font:inherit;font-family:'Azeret Mono',monospace;font-size:.9rem;padding:9px 11px;border-radius:10px;
+  border:1px solid var(--border2);background:var(--bg);color:var(--text);min-width:150px}
+.input:focus{outline:none;border-color:var(--gold-bd)}
+select.input{cursor:pointer}
+
+/* bit displays */
+.outrow{display:flex;flex-wrap:wrap;column-gap:3px;row-gap:22px;margin:8px 0 14px;align-items:flex-start}
+.bit{width:19px;height:25px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;
+  font-family:'Azeret Mono',monospace;font-size:.74rem;font-weight:600;position:relative;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text)}
+.bit.one{background:var(--gold-dim);border-color:var(--gold-bd);color:var(--gold)}
+.bit.zero{background:var(--surface2);color:var(--dim)}
+.bit.g4{margin-right:8px}
+.bit.dup{box-shadow:0 0 0 2px var(--teal-bd) inset}
+.bit.tgl{cursor:pointer}
+.bit.tgl:hover{transform:translateY(-2px)}
+.bit.outer{background:var(--teal-dim);border-color:var(--teal-bd);color:var(--teal)}
+.bit.mid{background:var(--gold-dim);border-color:var(--gold-bd);color:var(--gold)}
+.bit i{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:.55rem;color:var(--dim2);font-style:normal}
+.outrow.pad{padding-top:6px}
+.statline{display:flex;flex-wrap:wrap;gap:18px;font-size:.84rem;color:var(--dim);margin:6px 0 12px}
+.statline b{color:var(--text);font-family:'Azeret Mono',monospace}
+.stage{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 14px;margin:8px 0}
+.stage.l{border-left:3px solid var(--teal)} .stage.r{border-left:3px solid var(--gold)}
+.stage.k{border-left:3px solid var(--rose)} .stage.f{border-left:3px solid var(--green)}
+.stage-t{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.bits{font-family:'Azeret Mono',monospace;font-size:.92rem;font-weight:600;word-break:break-all}
+.splitrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.splitrow{grid-template-columns:1fr}}
+.arrow{text-align:center;color:var(--dim2);font-size:.8rem;margin:-2px 0}
+.resultbox{background:var(--gold-dim);border:1px solid var(--gold-bd);border-radius:12px;padding:16px 18px;margin:10px 0}
+.rb-k{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.rb-v{font-size:1.5rem;font-weight:700;letter-spacing:.06em;margin-top:4px;word-break:break-all}
+.nibrow{display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}
+.nib{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px}
+.nib-hex{font-size:.72rem;color:var(--gold);font-weight:700}
+.nib .bit{width:17px;height:22px;font-size:.68rem}
+.bytelabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);font-weight:700;margin-top:6px}
+.byterow{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.bytechip{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:6px 10px;font-size:.82rem}
+.bytechip b{color:var(--gold)}
+.bit8{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;max-width:360px;margin:8px 0}
+.bit8 .cell{aspect-ratio:1;display:grid;place-items:center;border-radius:7px;font-family:'Azeret Mono',monospace;
+  font-size:.82rem;font-weight:600;background:var(--surface2);border:1px solid var(--border)}
+.bit8 .cell.one{background:var(--gold-dim);border-color:var(--gold-bd);color:var(--gold)}
+.bit8 .cell.parity{background:repeating-linear-gradient(45deg,var(--surface2),var(--surface2) 5px,var(--rose-dim) 5px,var(--rose-dim) 10px);
+  color:var(--dim2);opacity:.6}
+.bit8.big{max-width:440px}
+.gridcap{font-size:.78rem;color:var(--dim);margin:12px 0 4px}
+.hl-l{color:var(--teal)} .hl-r{color:var(--gold)}
+table.dtable{width:100%;border-collapse:collapse;font-size:.83rem;margin:10px 0}
+table.dtable th,table.dtable td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:left}
+table.dtable th{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+table.dtable tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface2) 60%,transparent)}
+table.dtable .kcell{color:var(--gold);font-weight:600}
+table.dtable td.bad{color:var(--rose);font-weight:600}
+table.dtable td.good{color:var(--green);font-weight:600}
+table.dtable .inf{color:var(--dim2)}
+table.sbox{border-collapse:collapse;font-size:.72rem;margin:14px 0;font-family:'Azeret Mono',monospace}
+table.sbox th,table.sbox td{border:1px solid var(--border);padding:4px 7px;text-align:center;min-width:26px}
+table.sbox th{background:var(--surface2);color:var(--dim);font-size:.66rem}
+table.sbox td.sel{background:var(--gold);color:#1a1206;font-weight:800}
+.flow3{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0}
+.fb{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 14px}
+.fb.ok{border-color:var(--green)}
+.fb-t{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);font-weight:700}
+.fb b{font-size:1rem}
+.farrow{color:var(--dim2);font-size:.8rem;font-weight:600}
+.dim{color:var(--dim)}
+
+/* quiz */
+.quiz{margin-top:8px}
+.q{border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:12px 0;background:var(--surface2)}
+.q-t{font-weight:700;margin-bottom:12px}
+.qopts{display:flex;flex-direction:column;gap:8px}
+.qopt{text-align:left;font:inherit;font-size:.9rem;padding:10px 14px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:.14s}
+.qopt:hover{border-color:var(--gold-bd)}
+.qopt.correct{background:var(--green-dim);border-color:var(--green);color:var(--text);font-weight:600}
+.qopt.wrong{background:var(--rose-dim);border-color:var(--rose)}
+.qopt:disabled{cursor:default}
+.q-why{margin-top:11px;font-size:.88rem;color:var(--dim);display:none;border-left:2px solid var(--gold);padding-left:12px}
+.q-why.show{display:block}
+
+/* level map */
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin-top:22px}
+.lvcard{position:relative;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);
+  padding:20px 20px 18px;transition:.18s;cursor:pointer;overflow:hidden;display:block}
+.lvcard:hover{transform:translateY(-3px);border-color:var(--gold-bd);box-shadow:var(--shadow)}
+.lvcard .num{font-family:'Azeret Mono',monospace;font-size:.72rem;font-weight:700;color:var(--dim);
+  letter-spacing:.1em;text-transform:uppercase}
+.lvcard h3{margin:8px 0 6px;font-size:1.06rem}
+.lvcard p{margin:0;font-size:.86rem;color:var(--dim);line-height:1.5}
+.lvcard .foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:.76rem}
+.lvcard .xptag{color:var(--gold);font-weight:700;font-family:'Azeret Mono',monospace}
+.lvcard .st{display:flex;align-items:center;gap:6px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.dot{width:9px;height:9px;border-radius:99px;display:inline-block}
+.dot.locked{background:var(--dim2)} .dot.open{background:var(--gold)}
+.dot.done{background:var(--green)}
+.lvcard.done{border-color:var(--green)}
+.lvcard.locked{opacity:.62}
+.lvcard.locked:hover{transform:none;border-color:var(--border)}
+.lvcard .banner{position:absolute;inset:0;pointer-events:none}
+
+/* level hero */
+.lv-hero{padding:46px 0 8px}
+.lv-badge{display:inline-flex;align-items:center;gap:10px;font-family:'Azeret Mono',monospace;
+  font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+  border:1px solid var(--gold-bd);background:var(--gold-dim);padding:6px 13px;border-radius:999px}
+.lv-hero h1{font-size:clamp(1.9rem,4.6vw,2.9rem);letter-spacing:-.03em;line-height:1.05;margin:18px 0 10px;font-weight:800}
+.meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:.8rem;font-weight:600;padding:6px 12px;
+  border-radius:999px;border:1px solid var(--border2);background:var(--surface)}
+.pill.gold{color:var(--gold);border-color:var(--gold-bd);background:var(--gold-dim)}
+.pill.teal{color:var(--teal);border-color:var(--teal-bd);background:var(--teal-dim)}
+.pill.done{color:var(--green);border-color:var(--green);background:var(--green-dim)}
+.lv-nav{display:flex;justify-content:space-between;gap:14px;margin:44px 0 30px;flex-wrap:wrap}
+.lv-nav a{display:flex;flex-direction:column;gap:3px;padding:14px 18px;border:1px solid var(--border);
+  border-radius:12px;background:var(--surface);min-width:170px;font-size:.9rem}
+.lv-nav a:hover{border-color:var(--gold-bd)}
+.lv-nav .dir{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);font-weight:700}
+.lv-nav .next{margin-left:auto;text-align:right;align-items:flex-end}
+
+/* complete button */
+.complete-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between;
+  border:1px solid var(--gold-bd);background:linear-gradient(140deg,var(--gold-dim),transparent);
+  border-radius:var(--r);padding:20px 24px;margin:26px 0}
+.complete-bar .cb-t{font-weight:800;font-size:1.05rem}
+.complete-bar .cb-s{font-size:.86rem;color:var(--dim)}
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,120%);z-index:80;
+  background:var(--surface);border:1px solid var(--gold-bd);color:var(--text);padding:13px 20px;border-radius:12px;
+  box-shadow:var(--shadow);font-weight:600;font-size:.9rem;transition:transform .35s cubic-bezier(.2,.8,.3,1);max-width:90vw}
+#toast.show{transform:translate(-50%,0)}
+#toast .co-label{margin-bottom:2px}
+footer.foot{border-top:1px solid var(--border);margin-top:60px;padding:30px 0 46px;color:var(--dim);font-size:.85rem}
+footer.foot .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:16px}
+.badge{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);
+  background:var(--surface2);font-size:.84rem;font-weight:600}
+.badge.locked{opacity:.5}
+.badge .medal{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
+  background:var(--surface);border:1px solid var(--border2);font-size:.9rem}
+.badge.earned .medal{background:var(--gold);color:#1a1206;border-color:transparent;font-weight:800}
+.rankbar{margin:22px 0}
+.rankbar .rb{display:flex;justify-content:space-between;font-size:.8rem;color:var(--dim);margin-bottom:7px}
+.rankbar .track{height:12px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);overflow:hidden}
+.rankbar .track i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--teal));width:0;transition:width .6s}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:20px}
+.how .h{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.how .h .hn{font-family:'Azeret Mono',monospace;color:var(--gold);font-weight:800;font-size:.8rem}
+.how .h h3{margin:9px 0 6px}
+.how .h p{margin:0;color:var(--dim);font-size:.88rem}
+.freebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;
+  margin-top:20px;padding:14px 18px;border:1px dashed var(--border2);border-radius:12px;font-size:.86rem;color:var(--dim)}
+.switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-weight:700;color:var(--text);font-size:.86rem}
+.switch input{display:none}
+.switch .sl{width:42px;height:24px;border-radius:99px;background:var(--surface2);border:1px solid var(--border2);position:relative;transition:.2s}
+.switch .sl::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:99px;background:var(--dim);transition:.2s}
+.switch input:checked + .sl{background:var(--gold-dim);border-color:var(--gold-bd)}
+.switch input:checked + .sl::after{left:20px;background:var(--gold)}
+.gate{display:none;border:1px solid var(--rose);background:var(--rose-dim);border-radius:12px;padding:14px 18px;margin:18px 0;font-size:.9rem}
+.gate.show{display:block}
+@media(max-width:600px){.pad{padding:20px 18px}.lab-head,.lab-note,.lab .controls,.lab-out{padding-left:16px;padding-right:16px}}
+
+html[data-theme="light"]{
+  --bg:#f7f5f0; --bg2:#f2efe8; --surface:#ffffff; --surface2:#fbfaf7;
+  --border:rgba(20,25,35,.10); --border2:rgba(20,25,35,.18);
+  --text:#18212e; --dim:#5a6a7e; --dim2:#8593a5;
+  --gold:#b5811f; --gold-dim:rgba(181,129,31,.10); --gold-bd:rgba(181,129,31,.32);
+  --teal:#0f8f80; --teal-dim:rgba(15,143,128,.10); --teal-bd:rgba(15,143,128,.32);
+  --rose:#c04a5e; --rose-dim:rgba(192,74,94,.10);
+  --green:#2f8f57; --green-dim:rgba(47,143,87,.10);
+  --shadow:0 1px 2px rgba(30,40,60,.06),0 14px 30px -20px rgba(30,40,60,.35);
+}
+html[data-theme="dark"]{
+  --bg:#0d1117; --bg2:#10161e; --surface:#161c26; --surface2:#1b2431;
+  --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.15);
+  --text:#e9eef5; --dim:#93a2b6; --dim2:#64748b;
+  --gold:#e3ad48; --gold-dim:rgba(227,173,72,.13); --gold-bd:rgba(227,173,72,.35);
+  --teal:#3ac2b0; --teal-dim:rgba(58,194,176,.13); --teal-bd:rgba(58,194,176,.35);
+  --rose:#e27083; --rose-dim:rgba(226,112,131,.13);
+  --green:#54b878; --green-dim:rgba(84,184,120,.13);
+}
+</style>
+</head>
+<body><div class="topbar"><div class="wrap">
+  <a class="brand" href="index.html"><span class="mark">DES</span><span>Quest<small>Cryptography, gamified</small></span></a>
+  <div class="tb-prog" title="Overall progress"><i data-progressbar></i></div>
+  <div class="spacer"></div>
+  <a class="navlink" href="index.html#map">Level map</a>
+  <span class="chip"><span class="dot done"></span><b data-xp>0</b> XP</span>
+  <button class="iconbtn" id="themeBtn" title="Toggle theme">&#9681;</button>
+</div></div>
+
+<div class="wrap">
+  <section class="hero">
+    <span class="kicker">An interactive cryptography quest</span>
+    <h1 class="title">Learn DES by <em>building</em> it,<br>one round at a time.</h1>
+    <p class="lede">Twelve levels. Real bit-level code in Python. Interactive labs where you can watch every permutation, S-box and subkey move. Earn XP, collect badges, and finish by breaking the very cipher you built.</p>
+    <div class="hero-stats">
+      <div class="s"><b>12</b><span>Levels</span></div>
+      <div class="s"><b>2<sup>56</sup></b><span>Keyspace you will crack</span></div>
+      <div class="s"><b>16</b><span>Rounds to assemble</span></div>
+      <div class="s"><b data-totalxp>0</b><span>XP available</span></div>
+    </div>
+    <div class="btnrow">
+      <a class="btn btn-primary" href="level-1-bits-bytes-hex.html">Start Level 1 &rarr;</a>
+      <a class="btn" href="#map">See the full map</a>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="section-label">How the quest works</div>
+    <div class="how">
+      <div class="h"><div class="hn">01 &middot; Briefing</div><h3>Understand</h3><p>Each level opens with the concept in plain language, then shows exactly where it sits inside DES.</p></div>
+      <div class="h"><div class="hn">02 &middot; Lab</div><h3>Play</h3><p>Interactive widgets let you poke real DES data &mdash; flip bits, step through rounds, watch S-box lookups happen live.</p></div>
+      <div class="h"><div class="hn">03 &middot; Mission</div><h3>Code</h3><p>Write the Python function for that step. Hints and a full solution are one click away if you get stuck.</p></div>
+      <div class="h"><div class="hn">04 &middot; Checkpoint</div><h3>Prove it</h3><p>Answer the quiz, mark the level complete, and bank your XP and badge.</p></div>
+    </div>
+  </section>
+
+  <section class="block card pad">
+    <div class="section-label">Your progress</div>
+    <div class="rankbar">
+      <div class="rb"><span>Rank: <b data-rank style="color:var(--gold)">Recruit</b></span><span data-nextrank></span></div>
+      <div class="track"><i data-progressbar></i></div>
+    </div>
+    <div class="statline" style="margin-top:14px">
+      <span><b data-xp>0</b> XP</span>
+      <span><b data-donecount>0</b> / 12 levels complete</span>
+      <span><b class="mono">0</b> badges</span>
+    </div>
+    <div class="section-label" style="margin-top:22px">Badge collection</div>
+    <div class="badge-grid"><div class="badge locked" data-badge="1"><span class="medal">01</span>Bit Wrangler</div><div class="badge locked" data-badge="2"><span class="medal">02</span>Feistel Fellow</div><div class="badge locked" data-badge="3"><span class="medal">03</span>Permutation Pilot</div><div class="badge locked" data-badge="4"><span class="medal">04</span>Inverse Architect</div><div class="badge locked" data-badge="5"><span class="medal">05</span>Parity Purger</div><div class="badge locked" data-badge="6"><span class="medal">06</span>Subkey Smith</div><div class="badge locked" data-badge="7"><span class="medal">07</span>Expansion Expert</div><div class="badge locked" data-badge="8"><span class="medal">08</span>S-Box Whisperer</div><div class="badge locked" data-badge="9"><span class="medal">09</span>Diffusion Master</div><div class="badge locked" data-badge="10"><span class="medal">10</span>Round Runner</div><div class="badge locked" data-badge="11"><span class="medal">11</span>Reverse Engineer</div><div class="badge locked" data-badge="12"><span class="medal">12</span>Key Crusher</div></div>
+  </section>
+
+  <section class="block" id="map">
+    <div class="section-label">The level map</div>
+    <h2>From raw bits to a broken cipher</h2>
+    <p class="lede" style="font-size:1rem">Levels unlock as you complete them. In a hurry? Flip on free roam to jump anywhere.</p>
+    <div class="freebar">
+      <span>Free roam unlocks every level immediately (badges still need the quiz + code).</span>
+      <label class="switch"><input type="checkbox" id="freeToggle"><span class="sl"></span>Free roam</label>
+    </div>
+    <div class="map"><a class="lvcard" data-lv="1" href="level-1-bits-bytes-hex.html">
+  <span class="num">Level 01</span>
+  <h3>Bits, Bytes &amp; Hex</h3>
+  <p>The raw material</p>
+  <div class="foot"><span class="xptag">+60 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="2" href="level-2-meet-des.html">
+  <span class="num">Level 02</span>
+  <h3>Meet the DES Machine</h3>
+  <p>Feistel, and why it is elegant</p>
+  <div class="foot"><span class="xptag">+70 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="3" href="level-3-permutations.html">
+  <span class="num">Level 03</span>
+  <h3>Bit Permutations</h3>
+  <p>The humble workhorse</p>
+  <div class="foot"><span class="xptag">+70 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="4" href="level-4-initial-permutation.html">
+  <span class="num">Level 04</span>
+  <h3>Initial Permutation &amp; its Inverse</h3>
+  <p>Bookends of the cipher</p>
+  <div class="foot"><span class="xptag">+70 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="5" href="level-5-key-schedule-pc1.html">
+  <span class="num">Level 05</span>
+  <h3>Key Schedule I: PC-1</h3>
+  <p>56 bits of muscle, 8 bits of padding</p>
+  <div class="foot"><span class="xptag">+80 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="6" href="level-6-key-schedule-pc2.html">
+  <span class="num">Level 06</span>
+  <h3>Key Schedule II: Rotations &amp; PC-2</h3>
+  <p>Sixteen subkeys from two halves</p>
+  <div class="foot"><span class="xptag">+90 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="7" href="level-7-expansion-xor.html">
+  <span class="num">Level 07</span>
+  <h3>Round Function I: Expansion &amp; XOR</h3>
+  <p>Stretch, then mix</p>
+  <div class="foot"><span class="xptag">+90 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="8" href="level-8-s-boxes.html">
+  <span class="num">Level 08</span>
+  <h3>S-Boxes</h3>
+  <p>The non-linear heart</p>
+  <div class="foot"><span class="xptag">+100 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="9" href="level-9-p-box-feistel.html">
+  <span class="num">Level 09</span>
+  <h3>Round Function II: P-Box &amp; the Round</h3>
+  <p>Assembling f</p>
+  <div class="foot"><span class="xptag">+100 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="10" href="level-10-full-encryption.html">
+  <span class="num">Level 10</span>
+  <h3>Boss: 16 Rounds to Ciphertext</h3>
+  <p>Put it all together</p>
+  <div class="foot"><span class="xptag">+140 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="11" href="level-11-decryption.html">
+  <span class="num">Level 11</span>
+  <h3>Decryption</h3>
+  <p>Run the machine backwards</p>
+  <div class="foot"><span class="xptag">+110 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a><a class="lvcard" data-lv="12" href="level-12-cryptanalysis.html">
+  <span class="num">Level 12</span>
+  <h3>Final Boss: Why DES Fell</h3>
+  <p>Cryptanalysis</p>
+  <div class="foot"><span class="xptag">+150 XP</span>
+    <span class="st"><span class="dot locked" data-stdot></span><span data-sttxt>Locked</span></span></div>
+</a></div>
+  </section>
+</div>
+
+<footer class="foot"><div class="wrap">
+  <div><b>DES Quest</b> &mdash; build the Data Encryption Standard from scratch.<br>
+  <span style="font-size:.8rem">Every DES value on this site is computed live in your browser by a verified implementation.</span></div>
+  <div style="text-align:right;font-size:.8rem">
+    <div>Reference test vector: 0123456789ABCDEF + 133457799BBCDFF1 = 85E813540F0AB405</div>
+    <div style="color:var(--dim2)">Built for learning. Not for protecting real secrets.</div>
+  </div>
+</div></footer>
+<script>
+// DES core for the in-browser playground. Verified against the FIPS test vector.
+const IP=[58,50,42,34,26,18,10,2,60,52,44,36,28,20,12,4,62,54,46,38,30,22,14,6,64,56,48,40,32,24,16,8,57,49,41,33,25,17,9,1,59,51,43,35,27,19,11,3,61,53,45,37,29,21,13,5,63,55,47,39,31,23,15,7];
+const FP=[40,8,48,16,56,24,64,32,39,7,47,15,55,23,63,31,38,6,46,14,54,22,62,30,37,5,45,13,53,21,61,29,36,4,44,12,52,20,60,28,35,3,43,11,51,19,59,27,34,2,42,10,50,18,58,26,33,1,41,9,49,17,57,25];
+const PC1=[57,49,41,33,25,17,9,1,58,50,42,34,26,18,10,2,59,51,43,35,27,19,11,3,60,52,44,36,63,55,47,39,31,23,15,7,62,54,46,38,30,22,14,6,61,53,45,37,29,21,13,5,28,20,12,4];
+const PC2=[14,17,11,24,1,5,3,28,15,6,21,10,23,19,12,4,26,8,16,7,27,20,13,2,41,52,31,37,47,55,30,40,51,45,33,48,44,49,39,56,34,53,46,42,50,36,29,32];
+const E=[32,1,2,3,4,5,4,5,6,7,8,9,8,9,10,11,12,13,12,13,14,15,16,17,16,17,18,19,20,21,20,21,22,23,24,25,24,25,26,27,28,29,28,29,30,31,32,1];
+const P=[16,7,20,21,29,12,28,17,1,15,23,26,5,18,31,10,2,8,24,14,32,27,3,9,19,13,30,6,22,11,4,25];
+const SHIFTS=[1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1];
+const SBOX=[
+[[14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7],[0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8],[4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0],[15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13]],
+[[15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10],[3,13,4,7,15,2,8,14,12,0,1,10,6,9,11,5],[0,14,7,11,10,4,13,1,5,8,12,6,9,3,2,15],[13,8,10,1,3,15,4,2,11,6,7,12,0,5,14,9]],
+[[10,0,9,14,6,3,15,5,1,13,12,7,11,4,2,8],[13,7,0,9,3,4,6,10,2,8,5,14,12,11,15,1],[13,6,4,9,8,15,3,0,11,1,2,12,5,10,14,7],[1,10,13,0,6,9,8,7,4,15,14,3,11,5,2,12]],
+[[7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15],[13,8,11,5,6,15,0,3,4,7,2,12,1,10,14,9],[10,6,9,0,12,11,7,13,15,1,3,14,5,2,8,4],[3,15,0,6,10,1,13,8,9,4,5,11,12,7,2,14]],
+[[2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9],[14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6],[4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14],[11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3]],
+[[12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11],[10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8],[9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6],[4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13]],
+[[4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1],[13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6],[1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2],[6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12]],
+[[13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7],[1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2],[7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8],[2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11]]];
+
+const hexToBits=h=>{h=h.trim().replace(/\s/g,'').toUpperCase();let b=[];for(const c of h){const v=parseInt(c,16);for(let i=3;i>=0;i--)b.push((v>>i)&1);}return b;};
+const bitsToHex=b=>{let o='';for(let i=0;i<b.length;i+=4){let v=0;for(let j=0;j<4;j++)v=(v<<1)|b[i+j];o+='0123456789ABCDEF'[v];}return o;};
+const permute=(b,t)=>t.map(p=>b[p-1]);
+const xor=(a,b)=>a.map((x,i)=>x^b[i]);
+const lshift=(b,n)=>b.slice(n).concat(b.slice(0,n));
+
+function keySchedule(keyBits){
+  const k=permute(keyBits,PC1); let C=k.slice(0,28),D=k.slice(28); const sub=[];
+  for(let i=0;i<16;i++){C=lshift(C,SHIFTS[i]);D=lshift(D,SHIFTS[i]);sub.push(permute(C.concat(D),PC2));}
+  return sub;
+}
+function feistel(R,K){
+  const x=xor(permute(R,E),K); const out=[];
+  for(let i=0;i<8;i++){const s=x.slice(i*6,i*6+6);const row=(s[0]<<1)|s[5];const col=(s[1]<<3)|(s[2]<<2)|(s[3]<<1)|s[4];
+    const v=SBOX[i][row][col]; out.push((v>>3)&1,(v>>2)&1,(v>>1)&1,v&1);}
+  return permute(out,P);
+}
+function desBlock(blockBits,keyBits,decrypt=false){
+  const b=permute(blockBits,IP); let L=b.slice(0,32),R=b.slice(32);
+  let keys=keySchedule(keyBits); if(decrypt)keys=keys.slice().reverse();
+  for(const K of keys){const nR=xor(L,feistel(R,K)); L=R; R=nR;}
+  return permute(R.concat(L),FP);
+}
+if(typeof module!=='undefined'&&module.exports){module.exports={hexToBits,bitsToHex,permute,keySchedule,feistel,desBlock,IP,FP,PC1,PC2,E,P,SHIFTS,SBOX};}
+
+
+const DES={hexToBits,bitsToHex,permute,keySchedule,feistel,desBlock,IP,FP,PC1,PC2,E,P,SHIFTS,SBOX};
+
+
+// ---- progress store ----
+const STORE='desquest.v1';
+const RANKS=[[0, "Recruit"], [120, "Bit Wrangler"], [300, "S-Box Apprentice"], [540, "Round Runner"], [820, "Keymaster"], [1150, "Cryptomancer"], [1500, "Cipher Legend"]];
+function loadState(){try{const s=JSON.parse(localStorage.getItem(STORE));return s&&typeof s==='object'?Object.assign({xp:0,done:{},free:false},s):{xp:0,done:{},free:false};}catch(e){return {xp:0,done:{},free:false};}}
+function saveState(s){try{localStorage.setItem(STORE,JSON.stringify(s));}catch(e){}}
+function totalXP(){return 1130;}
+function rankFor(xp){let r=RANKS[0][1];for(const [t,n] of RANKS){if(xp>=t)r=n;}return r;}
+function nextRank(xp){for(const [t,n] of RANKS){if(xp<t)return [t,n];}return null;}
+function renderHUD(){
+  const s=loadState(); const xp=s.xp;
+  document.querySelectorAll('[data-xp]').forEach(e=>e.textContent=xp);
+  document.querySelectorAll('[data-rank]').forEach(e=>e.textContent=rankFor(xp));
+  const doneCount=Object.keys(s.done).length;
+  document.querySelectorAll('[data-donecount]').forEach(e=>e.textContent=doneCount);
+  document.querySelectorAll('[data-progressbar]').forEach(e=>e.style.width=Math.min(100,(xp/totalXP())*100)+'%');
+  const nr=nextRank(xp);
+  document.querySelectorAll('[data-nextrank]').forEach(e=>{
+    if(nr){const [t,n]=nr;e.textContent=(t-xp)+' XP to '+n;}
+    else e.textContent='Max rank reached';
+  });
+  document.querySelectorAll('[data-badge]').forEach(e=>{
+    const id=e.getAttribute('data-badge');
+    const on=!!s.done[id];
+    e.classList.toggle('earned',on); e.classList.toggle('locked',!on);
+  });
+}
+function toast(msg,label){
+  let t=document.getElementById('toast'); if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
+  t.innerHTML=(label?'<span class="co-label">'+label+'</span>':'')+msg;
+  t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function completeLevel(id,xp){
+  const s=loadState();
+  if(s.done[id]){toast('Already completed.','Nice');return;}
+  s.done[id]=true; s.xp+=xp; saveState(s);
+  renderHUD(); reflectComplete(id,xp);
+  toast('+'+xp+' XP earned &mdash; level complete!','Level up');
+}
+function reflectComplete(id,xp){
+  const b=document.getElementById('completeBtn');
+  if(b){b.textContent='Completed';b.disabled=true;b.classList.remove('btn-primary');}
+  const p=document.getElementById('donePill'); if(p){p.classList.add('done');p.textContent='\u2713 Completed';}
+}
+function initTheme(){
+  const saved=localStorage.getItem('desquest.theme');
+  if(saved)document.documentElement.setAttribute('data-theme',saved);
+  const btn=document.getElementById('themeBtn');
+  if(btn)btn.onclick=()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const next=cur==='light'?'dark':(cur==='dark'?'light':'light');
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('desquest.theme',next);
+  };
+}
+function bitsHTML(bits,cls){return bits.map(b=>'<span class="bit '+(b?'one':'zero')+' '+(cls||'')+'">'+b+'</span>').join('');}
+document.addEventListener('DOMContentLoaded',()=>{initTheme();renderHUD();});
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('[data-totalxp]').forEach(e=>e.textContent=totalXP());
+  const s=loadState();
+  const free=document.getElementById('freeToggle');
+  free.checked=!!s.free;
+  function refreshMap(){
+    const st=loadState();
+    document.querySelectorAll('.lvcard').forEach(c=>{
+      const n=parseInt(c.getAttribute('data-lv'));
+      const done=!!st.done[n];
+      const prevDone=n===1||!!st.done[n-1];
+      const unlocked=done||prevDone||st.free;
+      c.classList.toggle('done',done);
+      c.classList.toggle('locked',!unlocked);
+      const dot=c.querySelector('[data-stdot]'), txt=c.querySelector('[data-sttxt]');
+      dot.className='dot '+(done?'done':(unlocked?'open':'locked'));
+      txt.textContent=done?'Complete':(unlocked?'Ready':'Locked');
+      c.onclick=(e)=>{
+        if(!unlocked){e.preventDefault();toast('Finish Level '+(n-1)+' first, or switch on Free roam.','Locked');}
+      };
+    });
+    // badge count
+    const bc=document.querySelectorAll('.badge.earned').length;
+    document.querySelectorAll('.statline b.mono').forEach(e=>e.textContent=bc);
+  }
+  free.onchange=()=>{const st=loadState();st.free=free.checked;saveState(st);refreshMap();};
+  document.addEventListener('desquest-update',refreshMap);
+  refreshMap();
+  renderHUD();
+});
+
+</script>
+</body>
+</html>
